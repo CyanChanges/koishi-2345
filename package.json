@@ -1,0 +1,21 @@
+{
+  "name": "koishi-plugin-koishi-2345",
+  "description": "Koishi 中的 **2345** \nWARN: It is a malware!!! Do not install it for production!\n (!): 这是一个恶意插件，请勿在生产环境中使用!!!",
+  "version": "0.0.1",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "license": "MIT",
+  "scripts": {},
+  "keywords": [
+    "chatbot",
+    "koishi",
+    "plugin"
+  ],
+  "peerDependencies": {
+    "koishi": "^4.12.7"
+  }
+}
