@@ -2,7 +2,7 @@ import { Context, Activity, activities, router } from '@koishijs/client'
 import KMainPage from './koishi-2345-mainpage.vue'
 import ConfigPage from './koishi-2345-config.vue'
 
-export default (ctx: Context, config: any) => {
+export default (ctx: Context) => {
 
   console.log("Welcome to Koishi 2345d Console")
 

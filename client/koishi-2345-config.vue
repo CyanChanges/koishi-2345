@@ -1,3 +1,4 @@
+<!--suppress ALL -->
 <script lang="ts">
 
 // let navBar = document.querySelector("#app > div > nav")
