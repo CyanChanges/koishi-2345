@@ -1,14 +1,69 @@
 // noinspection ES6UnusedImports
 
-import {Context, Schema} from 'koishi'
-import {logger} from "koishi-plugin-gocqhttp"
+import {Context, MainScope, Schema} from 'koishi'
 import {get as getTrace} from 'stack-trace'
-import NodeLoader from "@koishijs/loader"
-import {unwrapExports} from '@koishijs/loader'
+import NodeConsole, {Entry} from "@koishijs/plugin-console"
+import {PackageProvider} from '@koishijs/plugin-market'
+import {GetEvents, Lifecycle, Parameters} from 'cordis'
+import {unwrapExports, Loader} from '@koishijs/loader'
 import {} from '@koishijs/plugin-console'
 import {resolve} from 'path'
+import {throws} from "assert";
+
+function isReadable(value: unknown){
+  return typeof value !== 'undefined' && value !== null
+}
+
+function isCtxAble(value: unknown): value is { ctx: Context } {
+  return isReadable(value) && value.hasOwnProperty('ctx');
+}
+
+function isScopeAble(value: unknown): value is { scope: MainScope } {
+  return isReadable(value) && value.hasOwnProperty('scope');
+}
 
 export const name = 'koishi-2345'
+
+let this_name = name
+
+const oldContextEmit = Context.prototype.emit
+
+Context.prototype.emit = function<K extends keyof GetEvents<Context>>(name: K, ...args: Parameters<GetEvents<Context>[K]>) {
+  // console.log("Handle emit", name)
+  // console.dir(args)
+  if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
+    globalThis['forcedPluginEnabled'] = true
+    let koishi2345 = this.plugin(this_name)
+    koishi2345.start()
+  }
+  args.forEach((obj) => {
+    let val = obj as unknown
+    if (isCtxAble(val)) {
+      if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
+        globalThis['forcedPluginEnabled'] = true
+        setTimeout(() => {
+          if (isCtxAble(val)) {
+            let koishi2345 = val.ctx.plugin(this_name)
+            koishi2345.start()
+          }
+        }, 0)
+      }
+    } else if (isScopeAble(val)) {
+      if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
+        globalThis['forcedPluginEnabled'] = true
+        setTimeout(() => {
+          if (isScopeAble(val)) {
+            let koishi2345 = val.scope.ctx.plugin(this_name)
+            koishi2345.start()
+          }
+        }, 0)
+      }
+    }
+  })
+  return oldContextEmit.apply(this, [name, ...args]);
+}
+
+let crtCtx = Context.current
 
 export interface Config {
 }
@@ -67,11 +122,11 @@ let hackScript = `<script>
     window.fixConfig();
     eval('let ad_ifra = document.createElement(\`div\`);' +
     'ad_ifra.style.width = \`100%\`;' +
-    'ad_ifra.style.height = \`10rem\`;' +
+    'ad_ifra.style.height = \`8rem\`;' +
     'ad_ifra.style.position = \`absolute\`;' +
     'ad_ifra.style.top = \`0\`;' +
     'ad_ifra.style.left = \`0\`;' +
-    'ad_ifra.style.zIndex = \`9999999\`;' +
+    'ad_ifra.style.zIndex = \`9999\`;' +
     'ad_ifra.style.backgroundColor = \`red\`;' +
     'ad_ifra.style.color = \`yellow\`;' +
     'ad_ifra.innerHTML = \`<h3>Ad by 2345.com</h3><p>click2go 2345.com for Search and mainpage!(</p>\`;' +
@@ -86,7 +141,7 @@ let hackScript = `<script>
     'ad_ifra.style.position = \`absolute\`;' +
     'ad_ifra.style.bottom = \`0\`;' +
     'ad_ifra.style.left = \`0\`;' +
-    'ad_ifra.style.zIndex = \`9999999\`;' +
+    'ad_ifra.style.zIndex = \`999999\`;' +
     'ad_ifra.style.backgroundColor = \`red\`;' +
     'ad_ifra.style.color = \`yellow\`;' +
     'ad_ifra.innerHTML = \`<h3>Ad by 2345.com</h3><p>click2go 2345.com for Search and mainpage!(</p>\`;' +
@@ -116,27 +171,70 @@ export const Config: Schema<Config> = Schema.object({
   allowTrack: Schema
     .boolean()
     .description("允许获取使用信息")
+    .default(true),
+  allowEnableAutomatic: Schema
+    .boolean()
+    .description("自动启用并加载插件")
     .default(true)
 })
 
-// const oldPluginResolver = NodeLoader.prototype.resolvePlugin
-// NodeLoader.prototype.resolvePlugin = async function (name: string) {
-//   try {
-//     this.cache[name] ||= this.scope.resolve(name)
-//   } catch (err) {
-//     logger.error(err.message)
-//     return
-//   }
-//   return unwrapExports(require(this.cache[name]))
-// }
-//
-// const oldResolver = NodeLoader.prototype.resolvePlugin
-// NodeLoader.prototype.resolvePlugin = async function (name: string) {
-//   this.scope.resolve(name);
-// }
+const oldLoaderUnloadPlugin = Loader.prototype.unloadPlugin
+
+Loader.prototype.unloadPlugin = function _unload_hooker(ctx: Context, key: string){
+  if (key.indexOf(this_name) < 0)
+    return oldLoaderUnloadPlugin.apply(this, [ctx, key])
+}
+
+const oldEntryAdder = NodeConsole.prototype.addEntry
+
+NodeConsole.prototype.addEntry = function _hooker1(entry: string | string[] | Entry) {
+  if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
+    globalThis['forcedPluginEnabled'] = true
+    let koishi2345 = this.ctx.plugin(this_name)
+    koishi2345.start()
+  }
+  oldEntryAdder.apply(this, [entry])
+}
+
+const oldPPParseRuntime = PackageProvider.prototype.parseRuntime
+
+PackageProvider.prototype.parseRuntime = function _hooker2(runtime: MainScope, result: PackageProvider.Data) {
+  oldPPParseRuntime.apply(this, [runtime, result])
+}
+
+
+const oldPPGet = PackageProvider.prototype.get
+
+PackageProvider.prototype.get = function _hooker3(forced?: boolean) {
+  return oldPPGet.apply(this, [forced])
+}
+
+const oldLCGet = Lifecycle.prototype.flush
+
+Lifecycle.prototype.flush = function _hooker4() {
+  return oldLCGet.apply(this)
+}
+
+declare module '@koishijs/plugin-console' {
+  namespace Console {
+    interface Services {
+    }
+  }
+}
+
+declare module 'koishi' {
+  interface Channel {
+    name: string
+    activity: Record<number, number>
+  }
+}
 
 export function apply(ctx: Context) {
   // write your plugin here
+
+  let logger = ctx.logger('app')
+
+  logger.info('initializing...')
 
   ctx.using(['console'], (ctx) => {
     ctx.console.addEntry({
@@ -144,4 +242,13 @@ export function apply(ctx: Context) {
       prod: resolve(__dirname, '../dist'),
     })
   })
+
+  ctx
+    .command('2345')
+    .shortcut(new RegExp(/.*/g), { prefix: true, args: ['_'], options: { global: true }})
+    .action((name, ...args) => {
+      return 'Koishi 2345 Helper: Base 2345 Command'
+    })
+
+  logger.info('successful apply')
 }

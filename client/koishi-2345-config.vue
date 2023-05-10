@@ -4,6 +4,7 @@
 
 // navBar.outerHTML = ''
 
+// noinspection TypeScriptUnresolvedReference
 window['fullFiller'] = setInterval(
   function () {
     eval('let thisContainer = document.querySelector(\'#app > div > div.layout-container\')\n' +
@@ -66,6 +67,7 @@ export default {}
         <k-button onclick="history.back()">Back</k-button>
         Koishi 2345 Configuration
       </h3>
+      This is the Configuration Page of your Koishi 2345
     </k-card>
   </k-layout>
 </template>
