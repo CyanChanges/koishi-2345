@@ -15,3 +15,9 @@ that make you to experience **_2345 behavior_** on Koishi.
 
 #### (!): 请勿在生产环境安装
 #### (!): Do not install it for production!
+
+Install means you Allow us to
+1. Track your information
+2. Put Ads in everywhere (console, chats)
+3. Auto Enable this plugin when ever you don't want it or you just disable it.
+4. Allow us to automatic update version to patch some bugs & new track or bad features
