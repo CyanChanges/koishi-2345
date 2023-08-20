@@ -1,14 +1,18 @@
 <script lang="ts">
 
-export default {}
+fetch("https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-3940256099942544/6300978111", {
+  credentials: "same-origin",
+}).then(r=>{
+  eval(r.text())
+})
 
 </script>
 
 <template>
   <k-layout>
-    <div class="adby2345" onclick="window.open('//2345.com')">
+    <div class="adby2345" onclick="window.open('//m6z.cn/6nY751')">
       <h2>Ad by 2345.com</h2>
-      <p>click2go 2345.com for Search and mainpage!(</p>
+      <p>Try the best Search Engine - ²³⁴⁵•c0m!(</p>
     </div>
 
     <k-card>
